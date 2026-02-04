@@ -26,13 +26,47 @@ def _max_file_bytes() -> int:
     return max(1, mb) * 1024 * 1024
 
 
+def _is_allowed(update: Update) -> bool:
+    """
+    Access control:
+    - ALLOWED_CHAT_IDS: comma-separated chat IDs (e.g. group IDs)
+    - ALLOWED_USER_IDS: comma-separated user IDs (for личка)
+    If both are unset, bot is open for everyone.
+    """
+    allowed_chats_raw = os.environ.get("ALLOWED_CHAT_IDS", "").strip()
+    allowed_users_raw = os.environ.get("ALLOWED_USER_IDS", "").strip()
+
+    # If nothing configured, allow all.
+    if not allowed_chats_raw and not allowed_users_raw:
+        return True
+
+    allowed_chats = {
+        x.strip() for x in allowed_chats_raw.split(",") if x.strip()
+    }
+    allowed_users = {
+        x.strip() for x in allowed_users_raw.split(",") if x.strip()
+    }
+
+    chat = update.effective_chat
+    user = update.effective_user
+
+    chat_id_ok = chat and str(chat.id) in allowed_chats if allowed_chats else False
+    user_id_ok = user and str(user.id) in allowed_users if allowed_users else False
+
+    return chat_id_ok or user_id_ok
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _is_allowed(update):
+        return
     await update.message.reply_text(
         "Отправьте файл диагностики (PDF/TXT/CSV) — я извлеку коды OBD2 и объясню результаты и дальнейшие шаги."
     )
 
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _is_allowed(update):
+        return
     await update.message.reply_text(
         "Загрузите в чат файл отчёта диагностики (PDF/TXT/CSV).\n"
         "Подсказка: укажите марку/модель/год/двигатель — так расшифровка кодов будет точнее."
@@ -46,6 +80,8 @@ def _is_group(update: Update) -> bool:
 
 
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not _is_allowed(update):
+        return
     msg = update.message
     if not msg or not msg.document:
         return
@@ -123,6 +159,9 @@ async def handle_step_plan_callback(update: Update, context: ContextTypes.DEFAUL
         return
     await query.answer()
 
+    if not _is_allowed(update):
+        return
+
     last = context.chat_data.get("last_report")
     if not last:
         await query.message.reply_text(
@@ -161,6 +200,9 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     If there is a previous report in this chat, answer in the context of that report.
     Otherwise, treat the text as a standalone question about OBD2 / diagnostics.
     """
+    if not _is_allowed(update):
+        return
+
     msg = update.message
     if not msg or not msg.text:
         return
