@@ -40,6 +40,7 @@ Output requirements:
 - If the report does not identify make/model/year/engine, ask for them and explain that manufacturer-specific code meanings can vary.
 - Distinguish clearly between: what the code means, common causes, and what to check next.
 - If information is insufficient, say clearly in Russian that information is insufficient and provide safe next steps.
+- Do not say anything like "Вы можете обратиться к специалисту по ремонту автомобилей для более точного диагностирования."
 """
 
 
