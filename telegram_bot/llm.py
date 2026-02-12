@@ -67,7 +67,7 @@ def analyze_report(
 
     codes_block = ", ".join(extracted_codes) if extracted_codes else "(none detected)"
 
-    user_prompt = f"""You are responding in a Telegram group chat. Answer in Russian only. Be concise but complete.
+    user_prompt = f"""You are responding in a Telegram group chat. Answer in Russian only. Be concise but complete. Do not use markup formatting (bold, italic, etc.).
 
 File: {filename}
 Detected codes: {codes_block}
