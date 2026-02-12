@@ -181,12 +181,46 @@ async def handle_generate_pdf_report_callback(update: Update, context: ContextTy
 
     await query.message.reply_text("Готовлю PDF отчёт…")
 
-    pdf = FPDF()    
+    # Используем fpdf2 + Unicode TTF‑шрифт, чтобы поддерживать русский текст.
+    fonts_dir = Path(__file__).parent / "fonts"
+    font_path = fonts_dir / "DejaVuSans.ttf"
+
+    if not font_path.exists():
+        await query.message.reply_text(
+            "Не найден файл шрифта DejaVuSans.ttf в папке fonts/. "
+        )
+        return
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "PDF отчёт", 0, 1, "C") # 0 - width, 10 - height, 0 - border, 1 - new line, C - center
-    pdf.output("report.pdf", "F") # F - save to file, I - save to memory
-    await query.message.reply_document(document=open("report.pdf", "rb"))
+
+    # Регистрируем Unicode‑шрифт (fpdf2)
+    pdf.add_font("DejaVu", "", str(font_path), uni=True)
+    pdf.set_font("DejaVu", "", 16)
+
+    pdf.cell(0, 10, "Отчёт по диагностике", ln=1, align="C")
+    pdf.ln(5)
+
+    pdf.set_font("DejaVu", "", 11)
+
+    # Собираем текст для отчёта
+    lines = []
+    lines.append(f"Файл отчёта: {last['filename']}")
+    if last["codes"]:
+        lines.append("Обнаруженные коды OBD2: " + ", ".join(last["codes"]))
+    lines.append("")
+    lines.append("Текстовый отчёт ассистента:")
+    lines.append(last["analysis"])
+
+    pdf_text = "\n".join(lines)
+    pdf.multi_cell(0, 6, pdf_text)
+
+    out_path = Path("report.pdf")
+    pdf.output(str(out_path))
+
+    with out_path.open("rb") as f:
+        await query.message.reply_document(document=f, filename="diagnostics-report.pdf")
 
 
 
@@ -311,4 +345,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
