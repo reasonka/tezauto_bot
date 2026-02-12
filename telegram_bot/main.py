@@ -210,7 +210,6 @@ async def handle_generate_pdf_report_callback(update: Update, context: ContextTy
     if last["codes"]:
         lines.append("Обнаруженные коды OBD2: " + ", ".join(last["codes"]))
     lines.append("")
-    lines.append("Текстовый отчёт ассистента:")
     lines.append(last["analysis"])
 
     pdf_text = "\n".join(lines)
