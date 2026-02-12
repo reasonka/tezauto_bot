@@ -302,6 +302,7 @@ def main() -> None:
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(CallbackQueryHandler(handle_step_plan_callback, pattern="^step_plan_yes$"))
+    app.add_handler(CallbackQueryHandler(handle_generate_pdf_report_callback, pattern="^generate_pdf_report$"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
 
