@@ -39,6 +39,8 @@ Language:
 Output requirements:
 - If the report does not identify make/model/year/engine, ask for them and explain that manufacturer-specific code meanings can vary.
 - Distinguish clearly between: what the code means, common causes, and what to check next.
+- Do not say anything about the next steps the person should take. Just provide the information that is provided in the report.
+- Do not say anything like "If you have any questions, please ask me."
 """
 
 
