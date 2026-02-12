@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ChatType
 
+from fpdf import FPDF
+
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -150,6 +152,42 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         "Дать пошаговый подробный план действий?",
         reply_markup=keyboard,
     )
+
+    keyboard2 = InlineKeyboardMarkup.from_button(
+        InlineKeyboardButton("Да", callback_data="generate_pdf_report")
+    )
+    await msg.reply_text(
+        "Сгенерировать PDF отчёт?",
+        reply_markup=keyboard2,
+    )
+
+
+async def handle_generate_pdf_report_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.callback_query
+    if not query or query.data != "generate_pdf_report":
+        return
+    await query.answer()
+
+
+    if not _is_allowed(update):
+        return
+
+    last = context.chat_data.get("last_report")
+    if not last:
+        await query.message.reply_text(
+            "Контекст отчёта потерян. Отправьте файл диагностики заново, затем нажмите кнопку."
+        )
+        return
+
+    await query.message.reply_text("Готовлю PDF отчёт…")
+
+    pdf = FPDF()    
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "PDF отчёт", 0, 1, "C") # 0 - width, 10 - height, 0 - border, 1 - new line, C - center
+    pdf.output("report.pdf", "F") # F - save to file, I - save to memory
+    await query.message.reply_document(document=open("report.pdf", "rb"))
+
 
 
 async def handle_step_plan_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
